@@ -4,10 +4,12 @@ import { useEventListener, useLocalStorage, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import Icon from './Icon.vue'
 import ItemEditor from './ItemEditor.vue'
+import LabelFilter from './LabelFilter.vue'
 import LabelPicker from './LabelPicker.vue'
 import SwipeToDelete from './SwipeToDelete.vue'
 import { createItem, deleteItem, updateItem } from '../api/items.js'
 import { addItemLabel, removeItemLabel, labelName, labelsOf } from '../api/labels.js'
+import { useLabelFilter } from '../labelFilter.js'
 import { formatShortTime, formatTime, parseBackendTime } from '../time.js'
 
 const props = defineProps({
@@ -76,65 +78,23 @@ function onBack() {
 // collapsed. Whether it is collapsed is remembered for every list.
 const showCompleted = useLocalStorage('shoppinglist.show-completed', true)
 
-// The list can be narrowed to the items of some labels. The choice is kept
-// across lists and visits, as it often follows where you are, like the shop
-// you are in. It holds label names, as each list has its own labels: "Rema"
-// in one list is not the same label as "Rema" in another, but means the same.
+// What is still to buy and what is bought each have their own label filter,
+// offering only the labels of those items.
+const allOpenItems = computed(() => props.list.items.filter(item => item.completed === null))
+const allCompletedItems = computed(() => props.list.items.filter(item => item.completed !== null))
+
 // The key is from when labels were called stores, so the choice is kept.
-const labelFilter = useLocalStorage('shoppinglist.store-filter-names', [])
-
-// The labels used by items in this list, sorted by name, leaving out deleted
-// ones.
-const listLabels = computed(() => {
-  const byId = new Map()
-  for (const item of props.list.items) {
-    for (const itemLabel of item.labels ?? []) {
-      const name = labelName(props.list.id, itemLabel)
-      if (name) {
-        byId.set(itemLabel.labelId, { id: itemLabel.labelId, name })
-      }
-    }
-  }
-  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id)
+const openFilter = useLabelFilter({
+  listId: () => props.list.id,
+  listItems: () => props.list.items,
+  items: allOpenItems,
+  storageKey: 'shoppinglist.store-filter-names'
 })
-
-// Kept in the filter beside the label names for the items without a label. A
-// label name can not be this, as it starts with a character no one types.
-const NO_LABEL = '\u0000no-label'
-
-function hasNoLabel(item) {
-  return !(item.labels ?? []).some(label => labelName(props.list.id, label))
-}
-
-// Only offered when some items have a label and some do not.
-const offerNoLabel = computed(() => listLabels.value.length > 0 && props.list.items.some(hasNoLabel))
-
-// Labels filtered on that this list does not use are ignored.
-const activeFilter = computed(() =>
-  labelFilter.value.filter(name =>
-    name === NO_LABEL ? offerNoLabel.value : listLabels.value.some(label => label.name === name)
-  )
-)
-
-// Filters on labels this list does not have are kept for the other lists.
-function toggleFilter(name) {
-  labelFilter.value = labelFilter.value.includes(name)
-    ? labelFilter.value.filter(other => other !== name)
-    : [...labelFilter.value, name]
-}
-
-// An item is shown if it has any of the filtered labels, or no label at all
-// when that is chosen.
-const visibleItems = computed(() => {
-  if (!activeFilter.value.length) {
-    return props.list.items
-  }
-  const noLabel = activeFilter.value.includes(NO_LABEL)
-  return props.list.items.filter(
-    item =>
-      (noLabel && hasNoLabel(item)) ||
-      item.labels?.some(label => activeFilter.value.includes(labelName(props.list.id, label)))
-  )
+const completedFilter = useLabelFilter({
+  listId: () => props.list.id,
+  listItems: () => props.list.items,
+  items: allCompletedItems,
+  storageKey: 'shoppinglist.completed-filter-names'
 })
 
 // Newest first by the given time, and the newest item first when the times
@@ -147,10 +107,10 @@ function newestFirst(timeOf) {
 
 // What is still to buy by when it was added, what is bought by when.
 const openItems = computed(() =>
-  visibleItems.value.filter(item => item.completed === null).sort(newestFirst(item => item.created))
+  [...openFilter.visible.value].sort(newestFirst(item => item.created))
 )
 const completedItems = computed(() =>
-  visibleItems.value.filter(item => item.completed !== null).sort(newestFirst(item => item.completed))
+  [...completedFilter.visible.value].sort(newestFirst(item => item.completed))
 )
 // The store sections the backend sorts items into, in the order a shop
 // usually has them. Items it has not sorted yet, or could not, come last.
@@ -203,9 +163,10 @@ const openGroups = computed(() => {
   })).filter(group => group.items.length)
 })
 
+// Completed is there while anything is, also when its filter hides it all.
 const sections = computed(() => [
   ...openGroups.value,
-  ...(completedItems.value.length ? [{ key: 'completed', items: completedItems.value }] : [])
+  ...(allCompletedItems.value.length ? [{ key: 'completed', items: completedItems.value }] : [])
 ])
 
 // Items with a completion still being saved, so a double tap is not sent twice.
@@ -356,42 +317,11 @@ async function submit() {
         </button>
       </div>
 
-      <div v-if="listLabels.length" class="filter" role="group" :aria-label="t('labels.filter')">
-        <button
-          v-for="label in listLabels"
-          :key="label.id"
-          type="button"
-          class="filter-chip"
-          :class="{ active: activeFilter.includes(label.name) }"
-          :aria-pressed="activeFilter.includes(label.name)"
-          @click="toggleFilter(label.name)"
-        >
-          <Icon name="label" />
-          {{ label.name }}
-        </button>
-        <button
-          v-if="offerNoLabel"
-          type="button"
-          class="filter-chip no-label"
-          :class="{ active: activeFilter.includes(NO_LABEL) }"
-          :aria-pressed="activeFilter.includes(NO_LABEL)"
-          @click="toggleFilter(NO_LABEL)"
-        >
-          {{ t('labels.noLabel') }}
-        </button>
-        <button
-          v-if="activeFilter.length"
-          type="button"
-          class="filter-chip show-all"
-          @click="labelFilter = []"
-        >
-          {{ t('labels.showAll') }}
-        </button>
-      </div>
+      <LabelFilter :filter="openFilter" :label="t('labels.filter')" />
 
       <p v-if="!list.items.length" class="empty">{{ t('lists.noItems') }}</p>
-      <p v-else-if="!visibleItems.length" class="empty">{{ t('lists.noFilteredItems') }}</p>
-      <p v-else-if="!openItems.length" class="empty">{{ t('lists.allCompleted') }}</p>
+      <p v-else-if="!allOpenItems.length" class="empty">{{ t('lists.allCompleted') }}</p>
+      <p v-else-if="!openItems.length" class="empty">{{ t('lists.noFilteredItems') }}</p>
 
       <template v-for="section in sections" :key="section.key">
         <button
@@ -406,6 +336,15 @@ async function submit() {
           {{ t('lists.completed', { count: section.items.length }) }}
         </button>
         <h3 v-else-if="section.heading" class="section-heading">{{ t(section.heading) }}</h3>
+
+        <template v-if="section.key === 'completed' && showCompleted">
+          <LabelFilter
+            class="completed-filter"
+            :filter="completedFilter"
+            :label="t('labels.filterCompleted')"
+          />
+          <p v-if="!section.items.length" class="empty">{{ t('lists.noFilteredItems') }}</p>
+        </template>
 
         <ul
           v-if="section.items.length && (section.key !== 'completed' || showCompleted)"
@@ -914,56 +853,11 @@ h2 {
   color: var(--color-text-muted);
 }
 
-/* The labels used in the list, as chips that narrow the list down. */
-.filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: -0.5rem 0 1rem;
-}
-
-.filter-chip,
-.filter-chip:hover:not(:disabled) {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-}
-
-.filter-chip:hover:not(:disabled) {
-  border-color: var(--color-primary);
-}
-
-.filter-chip.active,
-.filter-chip.active:hover:not(:disabled) {
-  color: var(--color-on-primary);
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-/* Not a label, so it has no label icon and a dashed edge. */
-.filter-chip.no-label:not(.active) {
-  border-style: dashed;
-}
-
-.filter-chip.show-all,
-.filter-chip.show-all:hover:not(:disabled) {
-  color: var(--color-primary);
-  background: transparent;
-  border-color: transparent;
-}
-
-.filter-chip :deep(svg) {
-  width: 0.9375rem;
-  height: 0.9375rem;
+/* Just under the Completed toggle, closer than the top filter is to the
+   title. */
+.filter.completed-filter {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
 }
 
 .empty {
@@ -1004,17 +898,9 @@ h2 {
     margin-top: 0.5rem;
   }
 
-  /* One row that scrolls sideways, running to the edges of the screen. */
-  .filter {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    margin: -0.5rem -1rem 1rem;
-    padding: 0 1rem;
-    scrollbar-width: none;
-  }
-
-  .filter::-webkit-scrollbar {
-    display: none;
+  .filter.completed-filter {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
   }
 
   .back,

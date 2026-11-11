@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.0
+
+- Images on an item open full screen in the add-on, instead of in a new
+  window. In the Home Assistant app on iPhone, the new window opened in
+  Safari, which is not signed in to Home Assistant, so it only showed an
+  access denied page.
+- The label filter at the top of a list only offers the labels of items
+  still to buy. Completed items have a filter of their own, under the
+  Completed heading. A label being filtered on stays offered after its last
+  item is ticked off, so the list does not suddenly show everything.
+
 ## 0.11.0
 
 - A completed item stays where it is, ticked, for 4 seconds before it moves

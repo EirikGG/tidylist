@@ -187,6 +187,17 @@ async function removeAttachment(attachment) {
   }
 }
 
+// An image is shown full size here rather than in a new window: the Home
+// Assistant app opens new windows in the browser, which is not signed in to
+// Home Assistant, so the image would only be an access denied page.
+const viewer = ref(null)
+const viewing = ref(null)
+
+function viewImage(image) {
+  viewing.value = image
+  viewer.value.showModal()
+}
+
 function formatSize(bytes) {
   if (bytes < 1024 * 1024) {
     return `${Math.max(1, Math.round(bytes / 1024))} kB`
@@ -317,9 +328,15 @@ function formatSize(bytes) {
         <h3 class="heading">{{ t('item.files') }}</h3>
         <ul v-if="images.length" class="images">
           <li v-for="image in images" :key="image.id">
-            <a :href="attachmentUrl(image.id)" target="_blank" rel="noopener" :title="image.fileName">
+            <button
+              type="button"
+              class="thumbnail"
+              :aria-label="image.fileName"
+              :title="image.fileName"
+              @click="viewImage(image)"
+            >
               <img :src="attachmentUrl(image.id)" :alt="image.fileName" loading="lazy" />
-            </a>
+            </button>
             <button
               type="button"
               class="icon remove on-image"
@@ -372,6 +389,25 @@ function formatSize(bytes) {
         <button type="button" :disabled="busy || !name.trim()" @click="done">{{ t('item.done') }}</button>
       </div>
     </div>
+
+    <!-- A tap anywhere closes it, as does Escape. -->
+    <dialog
+      ref="viewer"
+      class="viewer"
+      :aria-label="viewing?.fileName"
+      @click.stop="viewer.close()"
+      @close.stop="viewing = null"
+    >
+      <img v-if="viewing" :src="attachmentUrl(viewing.id)" :alt="viewing.fileName" />
+      <button
+        type="button"
+        class="icon close-viewer"
+        :aria-label="t('item.close')"
+        :title="t('item.close')"
+      >
+        <Icon name="x" />
+      </button>
+    </dialog>
   </dialog>
 </template>
 
@@ -519,11 +555,58 @@ ul {
   aspect-ratio: 1;
 }
 
-.images a,
+.images .thumbnail,
 .images img {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.images .thumbnail,
+.images .thumbnail:hover:not(:disabled) {
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: zoom-in;
+}
+
+/* The whole screen, dark, with the image as large as it fits. */
+.viewer {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.92);
+  border: none;
+}
+
+.viewer[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer::backdrop {
+  background: transparent;
+}
+
+.viewer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.close-viewer,
+.close-viewer:hover:not(:disabled) {
+  position: absolute;
+  top: calc(0.75rem + env(safe-area-inset-top));
+  right: 0.75rem;
+  color: #ffffff;
+  background: rgba(15, 29, 43, 0.6);
+  border: none;
+  border-radius: var(--radius);
 }
 
 .images img {

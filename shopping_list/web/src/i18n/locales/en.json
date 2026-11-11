@@ -62,6 +62,7 @@
     "close": "Close",
     "choose": "Choose label",
     "filter": "Filter by label",
+    "filterCompleted": "Filter completed items by label",
     "showAll": "Show all",
     "noLabel": "No label"
   },

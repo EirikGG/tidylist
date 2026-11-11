@@ -62,6 +62,7 @@
     "close": "Lukk",
     "choose": "Velg etikett",
     "filter": "Filtrer på etikett",
+    "filterCompleted": "Filtrer fullførte varer på etikett",
     "showAll": "Vis alle",
     "noLabel": "Uten etikett"
   },
