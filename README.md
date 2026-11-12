@@ -1,14 +1,14 @@
 <div align="center">
 
-# 🛒 Shopping list
+# 🛒 Tidylist
 
-**Shared shopping lists for the whole household, right in the Home Assistant sidebar.**
+**Shared lists for the whole household, right in the Home Assistant sidebar.**
 
 Items are sorted into store sections by a small on-device language model, filtered by shop,
 and show up in Home Assistant as to-do lists, sensors and automation events.
 
-[![Release](https://img.shields.io/github/v/release/EirikGG/shopping-list?label=release)](https://github.com/EirikGG/shopping-list/releases)
-[![Build](https://img.shields.io/github/actions/workflow/status/EirikGG/shopping-list/addon.yml?branch=main&label=build)](https://github.com/EirikGG/shopping-list/actions/workflows/addon.yml)
+[![Release](https://img.shields.io/github/v/release/EirikGG/tidylist?label=release)](https://github.com/EirikGG/tidylist/releases)
+[![Build](https://img.shields.io/github/actions/workflow/status/EirikGG/tidylist/addon.yml?branch=main&label=build)](https://github.com/EirikGG/tidylist/actions/workflows/addon.yml)
 ![Home Assistant add-on](https://img.shields.io/badge/Home%20Assistant-add--on-41BDF5?logo=homeassistant&logoColor=white)
 [![HACS Custom](https://img.shields.io/badge/HACS-custom-41BDF5)](https://hacs.xyz/docs/faq/custom_repositories/)
 ![Architectures](https://img.shields.io/badge/arch-amd64%20%7C%20aarch64-informational)
@@ -71,30 +71,30 @@ Requires Home Assistant OS or a Supervised installation (for add-ons), on **amd6
 
 ### 1. The add-on
 
-[![Add the repository to your Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FEirikGG%2Fshopping-list)
+[![Add the repository to your Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FEirikGG%2Ftidylist)
 
 Or by hand:
 
 1. In Home Assistant, go to **Settings → Add-ons → Add-on store**, open the **⋮** menu and choose
    **Repositories**.
-2. Add `https://github.com/EirikGG/shopping-list`.
-3. Find **Shopping list** in the store, install it, and start it.
+2. Add `https://github.com/EirikGG/tidylist`.
+3. Find **Tidylist** in the store, install it, and start it.
 
-Shopping list then appears in the sidebar for every user. The sorting model takes up to a minute
+Tidylist then appears in the sidebar for every user. The sorting model takes up to a minute
 to load the first time the add-on starts. Until then, new items are sorted when it's ready.
 
 ### 2. To-do lists in Home Assistant (optional)
 
 This needs an MQTT broker, such as the **Mosquitto broker** add-on with the MQTT integration set up.
 
-[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=EirikGG&repository=shopping-list&category=integration)
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=EirikGG&repository=tidylist&category=integration)
 
 Or by hand:
 
 1. In HACS, open the **⋮** menu → **Custom repositories**, and add
-   `https://github.com/EirikGG/shopping-list` with the type **Integration**.
-2. Download **Shopping list (add-on)**, and restart Home Assistant.
-3. Go to **Settings → Devices & services → Add integration**, and choose **Shopping list (add-on)**.
+   `https://github.com/EirikGG/tidylist` with the type **Integration**.
+2. Download **Tidylist (add-on)**, and restart Home Assistant.
+3. Go to **Settings → Devices & services → Add integration**, and choose **Tidylist (add-on)**.
    There's nothing to fill in.
 
 ## Home Assistant integration
@@ -141,7 +141,7 @@ actions:
       message: "{{ trigger.to_state.attributes.by }} added {{ trigger.to_state.attributes.item }}"
 ```
 
-The add-on's **Documentation** tab ([`shopping_list/DOCS.md`](shopping_list/DOCS.md)) has every
+The add-on's **Documentation** tab ([`tidylist/DOCS.md`](tidylist/DOCS.md)) has every
 command, event attribute and option.
 
 ## Data, privacy and backups
@@ -158,17 +158,17 @@ command, event attribute and option.
 ## How it is built
 
 ```
-shopping-list/
+tidylist/
 ├── repository.yaml                  Makes this repository a Home Assistant add-on repository
 ├── hacs.json                        Makes it a HACS repository for the integration
-├── shopping_list/                   The add-on
+├── tidylist/                        The add-on
 │   ├── config.yaml                  Add-on manifest (version, ingress, MQTT, backups)
 │   ├── Dockerfile                   Builds the backend, the frontend and fetches the model
 │   ├── DOCS.md / CHANGELOG.md       Shown in the add-on's Documentation and Changelog tabs
 │   ├── rest/                        Backend: Java 21, Javalin, SQLite, ONNX Runtime
 │   └── web/                         Frontend: Vue 3, Vite
 └── custom_components/
-    └── shopping_list_addon/         HACS integration: lists as to-do entities, over MQTT
+    └── tidylist/                    HACS integration: lists as to-do entities, over MQTT
 ```
 
 | Part | Technology |
@@ -200,8 +200,8 @@ GitHub container registry, where Home Assistant downloads them, and makes a GitH
 
 A version is only published once. To release:
 
-1. Bump `version` in `shopping_list/config.yaml` and
-   `custom_components/shopping_list_addon/manifest.json` (the workflow checks that they match), and
-   add it to `shopping_list/CHANGELOG.md`.
+1. Bump `version` in `tidylist/config.yaml` and
+   `custom_components/tidylist/manifest.json` (the workflow checks that they match), and
+   add it to `tidylist/CHANGELOG.md`.
 2. Push to `main`, and wait for the workflow to finish (a few minutes) before updating in Home
    Assistant. Until then Home Assistant may offer the update but fail to download it.

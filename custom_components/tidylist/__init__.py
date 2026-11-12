@@ -1,4 +1,4 @@
-"""The lists of the Shopping list add-on, as to-do lists in Home Assistant.
+"""The lists of the Tidylist add-on, as to-do lists in Home Assistant.
 
 The add-on publishes every list on MQTT, and takes commands there, so this
 integration needs the MQTT integration and nothing else.

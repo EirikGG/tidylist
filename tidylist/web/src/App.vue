@@ -9,7 +9,7 @@ import ThemeSwitcher from './components/ThemeSwitcher.vue'
 <template>
   <div class="app-shell">
     <header class="top-bar">
-      <h1>Shopping list</h1>
+      <h1>Tidylist</h1>
       <div class="top-bar-actions">
         <ThemeSwitcher />
         <LanguageSwitcher />

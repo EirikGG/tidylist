@@ -1,0 +1,14 @@
+{
+  "domain": "tidylist",
+  "name": "Tidylist (add-on)",
+  "codeowners": ["@EirikGG"],
+  "config_flow": true,
+  "dependencies": ["mqtt"],
+  "documentation": "https://github.com/EirikGG/tidylist",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/EirikGG/tidylist/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.13.0"
+}

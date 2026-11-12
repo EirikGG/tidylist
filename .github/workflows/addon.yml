@@ -1,12 +1,12 @@
 # Tests the add-on, and publishes its images to the GitHub container registry,
-# where Home Assistant downloads them (the image in shopping_list/config.yaml).
+# where Home Assistant downloads them (the image in tidylist/config.yaml).
 # Then makes a GitHub release of the version, which HACS installs the
-# integration (custom_components/shopping_list_addon) from.
+# integration (custom_components/tidylist) from.
 #
 # Images are only published from main, and only for a version that has not
 # been published before: a released version never changes. To release, bump
-# version in shopping_list/config.yaml and
-# custom_components/shopping_list_addon/manifest.json (and add to
+# version in tidylist/config.yaml and
+# custom_components/tidylist/manifest.json (and add to
 # CHANGELOG.md).
 
 name: Add-on
@@ -31,22 +31,22 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: maven
-          cache-dependency-path: shopping_list/rest/pom.xml
+          cache-dependency-path: tidylist/rest/pom.xml
 
       - name: Test the backend
-        working-directory: shopping_list/rest
+        working-directory: tidylist/rest
         run: mvn -B test
 
       # The add-on and the integration are released together, as one version.
       - name: Check that the add-on and the integration have the same version
         run: |
-          addon=$(yq '.version' shopping_list/config.yaml)
-          integration=$(jq -r '.version' custom_components/shopping_list_addon/manifest.json)
+          addon=$(yq '.version' tidylist/config.yaml)
+          integration=$(jq -r '.version' custom_components/tidylist/manifest.json)
           if [ "$addon" != "$integration" ]; then
             echo "::error::The add-on is $addon but the integration is $integration"
             exit 1
           fi
-          python3 -m py_compile custom_components/shopping_list_addon/*.py
+          python3 -m py_compile custom_components/tidylist/*.py
 
   image:
     needs: test
@@ -68,10 +68,10 @@ jobs:
       - name: Read the add-on version
         id: addon
         run: |
-          version=$(yq '.version' shopping_list/config.yaml)
+          version=$(yq '.version' tidylist/config.yaml)
           # Registry names must be lowercase; the owner is EirikGG.
           owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
-          image="ghcr.io/${owner}/${{ matrix.arch }}-addon-shopping-list"
+          image="ghcr.io/${owner}/${{ matrix.arch }}-addon-tidylist"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "image=${image}" >> "$GITHUB_OUTPUT"
           echo "Add-on ${version}: ${image}"
@@ -95,7 +95,7 @@ jobs:
             echo "Not main: building only."
             echo "push=false" >> "$GITHUB_OUTPUT"
           elif docker manifest inspect "${{ steps.addon.outputs.image }}:${{ steps.addon.outputs.version }}" > /dev/null 2>&1; then
-            echo "::notice::${{ steps.addon.outputs.version }} is already published. Bump version in shopping_list/config.yaml to release these changes."
+            echo "::notice::${{ steps.addon.outputs.version }} is already published. Bump version in tidylist/config.yaml to release these changes."
             echo "push=false" >> "$GITHUB_OUTPUT"
           else
             echo "Publishing ${{ steps.addon.outputs.version }}."
@@ -104,7 +104,7 @@ jobs:
 
       - uses: docker/build-push-action@v6
         with:
-          context: shopping_list
+          context: tidylist
           platforms: ${{ matrix.platform }}
           push: ${{ steps.publish.outputs.push == 'true' }}
           tags: |
@@ -115,7 +115,7 @@ jobs:
             io.hass.arch=${{ matrix.arch }}
             io.hass.version=${{ steps.addon.outputs.version }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.title=Shopping list
+            org.opencontainers.image.title=Tidylist
             org.opencontainers.image.version=${{ steps.addon.outputs.version }}
           # The node and maven stages are the same for both architectures, so
           # they share one cache.
@@ -136,7 +136,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          version=$(yq '.version' shopping_list/config.yaml)
+          version=$(yq '.version' tidylist/config.yaml)
           tag="v${version}"
           if gh release view "$tag" > /dev/null 2>&1; then
             echo "$tag is already released."
@@ -146,5 +146,5 @@ jobs:
             $0 == heading { found = 1; next }
             found && /^## / { exit }
             found { print }
-          ' shopping_list/CHANGELOG.md > notes.md
+          ' tidylist/CHANGELOG.md > notes.md
           gh release create "$tag" --title "$version" --notes-file notes.md --target "${{ github.sha }}"

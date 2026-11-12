@@ -42,7 +42,7 @@ import java.util.regex.Pattern;
 //   on these.
 // - text "Add item": what is typed in it is added to the list.
 //
-// The Shopping list integration (custom_components/shopping_list, through
+// The Tidylist integration (custom_components/shopping_list, through
 // HACS) reads the same state topic, with the recently completed items too,
 // and makes every list a to-do list in HA.
 //
@@ -248,12 +248,12 @@ public class MqttBridge implements ListChanges, MqttTransport.Listener {
         config.put("device", Map.of(
                 "identifiers", List.of("shopping_list_" + id),
                 "name", list.getName(),
-                "manufacturer", "Shopping list add-on",
-                "model", "Shopping list"
+                "manufacturer", "Tidylist add-on",
+                "model", "Tidylist"
         ));
         config.put("origin", Map.of(
-                "name", "Shopping list",
-                "support_url", "https://github.com/EirikGG/shopping-list"
+                "name", "Tidylist",
+                "support_url", "https://github.com/EirikGG/tidylist"
         ));
         return config;
     }

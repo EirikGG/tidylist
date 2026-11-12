@@ -1,10 +1,10 @@
 # Local development only. In production the app runs as a Home Assistant
 # add-on, where HA logs users in and its ingress proxy passes on who they are.
-# Here the Vite dev server plays that part (see shopping_list/web/vite.config.js).
+# Here the Vite dev server plays that part (see tidylist/web/vite.config.js).
 services:
   app:
     build:
-      context: shopping_list/rest/
+      context: tidylist/rest/
       dockerfile: Dockerfile
     environment:
       JAVA_TOOL_OPTIONS: >-
@@ -33,7 +33,7 @@ services:
   # /api to the backend as a made-up HA user.
   web-dev:
     build:
-      context: shopping_list/web/
+      context: tidylist/web/
       dockerfile: Dockerfile
       target: dev
     environment:
@@ -49,8 +49,8 @@ services:
     depends_on:
       - app
     volumes:
-      - ./shopping_list/web/src:/app/src
-      - ./shopping_list/web/index.html:/app/index.html
+      - ./tidylist/web/src:/app/src
+      - ./tidylist/web/index.html:/app/index.html
     profiles:
       - dev
 

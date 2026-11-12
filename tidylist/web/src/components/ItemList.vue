@@ -83,18 +83,17 @@ const showCompleted = useLocalStorage('shoppinglist.show-completed', true)
 const allOpenItems = computed(() => props.list.items.filter(item => item.completed === null))
 const allCompletedItems = computed(() => props.list.items.filter(item => item.completed !== null))
 
-// The key is from when labels were called stores, so the choice is kept.
 const openFilter = useLabelFilter({
   listId: () => props.list.id,
   listItems: () => props.list.items,
   items: allOpenItems,
-  storageKey: 'shoppinglist.store-filter-names'
+  storageKey: 'shoppinglist.label-filter-by-list'
 })
 const completedFilter = useLabelFilter({
   listId: () => props.list.id,
   listItems: () => props.list.items,
   items: allCompletedItems,
-  storageKey: 'shoppinglist.completed-filter-names'
+  storageKey: 'shoppinglist.completed-filter-by-list'
 })
 
 // Newest first by the given time, and the newest item first when the times

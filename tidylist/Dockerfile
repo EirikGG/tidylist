@@ -47,14 +47,8 @@ COPY --from=model /model/ ./model/
 ENV LOG_LEVEL=info \
     LOG_LEVEL_ROOT=info
 
-# UTC, as the web app reads the backend's times as UTC. HA sets TZ to its own
-# time zone in add-ons, which would shift them.
-CMD ["java", \
-     "-Xmx192m", "-XX:+UseSerialGC", \
-     "-Duser.timezone=UTC", \
-     "-DAPP.PORT=8099", \
-     "-DDB.FILE=/data/shoppinglist.db", \
-     "-DWEB.DIR=/app/web", \
-     "-DMODEL.DIR=/app/model", \
-     "-cp", "/app/lib/*", \
-     "no.eirikgg.shoppinglist.Main"]
+# Starts java, with the time zone set to UTC, as the web app reads the
+# backend's times as UTC (HA sets TZ to its own time zone in add-ons). It also
+# hands the lists over from the add-on's old name.
+COPY --chmod=755 run.sh /app/run.sh
+CMD ["/app/run.sh"]

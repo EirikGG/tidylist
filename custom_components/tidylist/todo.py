@@ -55,7 +55,7 @@ async def async_setup_entry(
     if not await mqtt.async_wait_for_mqtt_client(hass):
         raise ConfigEntryNotReady("MQTT is not connected")
 
-    lists: dict[int, ShoppingListEntity] = {}
+    lists: dict[int, TidylistEntity] = {}
     # The add-on says "offline" when it stops.
     online = {"value": True}
 
@@ -85,7 +85,7 @@ async def async_setup_entry(
             return
 
         if entity is None:
-            entity = ShoppingListEntity(list_id, state, online)
+            entity = TidylistEntity(list_id, state, online)
             lists[list_id] = entity
             async_add_entities([entity])
         else:
@@ -102,7 +102,7 @@ async def async_setup_entry(
     entry.async_on_unload(await mqtt.async_subscribe(hass, STATE_TOPICS, state_received))
 
 
-class ShoppingListEntity(TodoListEntity):
+class TidylistEntity(TodoListEntity):
     """One list. Its items' uids are the add-on's item ids."""
 
     _attr_has_entity_name = False
@@ -133,7 +133,7 @@ class ShoppingListEntity(TodoListEntity):
             self.async_write_ha_state()
 
     def _read(self, state: dict[str, Any]) -> None:
-        self._attr_name = state.get("list") or f"Shopping list {self._list_id}"
+        self._attr_name = state.get("list") or f"Tidylist {self._list_id}"
         items = [
             self._item(item, TodoItemStatus.NEEDS_ACTION) for item in state.get("items", [])
         ] + [

@@ -1,0 +1,14 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tidylist",
+        "description": "Viser listene i Tidylist-tillegget som gjøremålslister. Tillegget og MQTT-integrasjonen må være satt opp."
+      }
+    },
+    "abort": {
+      "mqtt_not_set_up": "Sett opp MQTT-integrasjonen først, med samme megler som tillegget.",
+      "single_instance_allowed": "Tidylist-integrasjonen er allerede satt opp."
+    }
+  }
+}

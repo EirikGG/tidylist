@@ -1,6 +1,6 @@
-"""Constants for the Shopping list (add-on) integration."""
+"""Constants for the Tidylist (add-on) integration."""
 
-DOMAIN = "shopping_list_addon"
+DOMAIN = "tidylist"
 
 # The add-on's topics; see MqttBridge in the add-on.
 BASE_TOPIC = "shopping_list"

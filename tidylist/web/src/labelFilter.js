@@ -7,16 +7,26 @@ import { labelName } from './api/labels.js'
 export const NO_LABEL = '\u0000no-label'
 
 // Narrows some of a list's items, like what is still to buy, to the items of
-// some labels. The choice is kept across lists and visits, under the given
-// key, as it often follows where you are, like the shop you are in. It holds
-// label names, as each list has its own labels: "Rema" in one list is not the
-// same label as "Rema" in another, but means the same.
+// some labels. Each list keeps its own choice across visits, under the given
+// key, so filtering one list leaves the others as they were. It holds label
+// names, so a label deleted and made again is still chosen.
 //
 // Only the labels of these items are offered. A label filtered on stays
 // offered while the list still has it elsewhere, so ticking off the last item
 // of a shop leaves its chip to turn off, rather than the whole list showing up.
 export function useLabelFilter({ listId, listItems, items, storageKey }) {
-  const chosen = useLocalStorage(storageKey, [])
+  // The chosen label names of each list, by list id.
+  const byList = useLocalStorage(storageKey, {})
+  const chosen = computed({
+    get: () => {
+      const names = byList.value?.[toValue(listId)]
+      return Array.isArray(names) ? names : []
+    },
+    set: names => {
+      const { [toValue(listId)]: _, ...others } = byList.value ?? {}
+      byList.value = names.length ? { ...others, [toValue(listId)]: names } : others
+    }
+  })
 
   const nameOf = itemLabel => labelName(toValue(listId), itemLabel)
 
@@ -56,8 +66,8 @@ export function useLabelFilter({ listId, listItems, items, storageKey }) {
       (chosen.value.includes(NO_LABEL) || toValue(items).some(hasNoLabel))
   )
 
-  // Labels chosen that are not offered here are ignored, and kept for the
-  // other lists.
+  // Labels chosen that are not offered right now are ignored, and kept for
+  // when they are again.
   const active = computed(() =>
     chosen.value.filter(name =>
       name === NO_LABEL ? offerNoLabel.value : labels.value.some(label => label.name === name)
